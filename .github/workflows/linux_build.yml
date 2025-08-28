@@ -1,19 +1,36 @@
 name: linux_build
 
-on: [push]
+on:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: install depends
+
+    - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y gnupg2
-        echo "deb http://security.ubuntu.com/ubuntu bionic-security main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32
-        sudo apt update
-        sudo apt install -y libssl1.0-dev libevent-dev
-    - name: Build
-      run: make
+        sudo apt install -y autoconf automake libtool pkg-config build-essential wget
+
+    - name: Download and build libevent 2.2.1-alpha
+      run: |
+        wget https://github.com/libevent/libevent/releases/download/release-2.2.1-alpha/libevent-2.2.1-alpha-dev.tar.gz
+        tar -xzf libevent-2.2.1-alpha-dev.tar.gz
+        cd libevent-2.2.1-alpha-dev
+        ./autogen.sh
+        ./configure
+        make
+        sudo make install
+        cd ..
+
+    - name: Export libevent path
+      run: |
+        echo "/usr/local/lib" | sudo tee /etc/ld.so.conf.d/libevent.conf
+        sudo ldconfig
+        echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+    - name: Build redsocks2 with HTTPS proxy enabled
+      run: |
+        make ENABLE_HTTPS_PROXY=true
