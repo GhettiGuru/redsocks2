@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04  # You can try ubuntu-18.04 if needed
+    runs-on: ubuntu-22.04  # You can try ubuntu-18.04 if needed
 
     steps:
     - uses: actions/checkout@v1
