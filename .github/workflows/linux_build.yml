@@ -5,7 +5,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04  # You can try ubuntu-18.04 if needed
+
     steps:
     - uses: actions/checkout@v1
 
@@ -13,6 +14,13 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y autoconf automake libtool pkg-config build-essential wget
+
+    - name: Download and install older OpenSSL packages
+      run: |
+        wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/openssl_1.1.1w-0+deb11u3_amd64.deb
+        wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u3_amd64.deb
+        sudo dpkg -i openssl_1.1.1w-0+deb11u3_amd64.deb libssl1.1_1.1.1w-0+deb11u3_amd64.deb || sudo apt-get install -f -y
+        sudo ldconfig
 
     - name: Download and build libevent 2.2.1-alpha
       run: |
@@ -34,3 +42,18 @@ jobs:
     - name: Build redsocks2 with HTTPS proxy enabled
       run: |
         make ENABLE_HTTPS_PROXY=true
+
+    - name: List build artifacts files
+      run: |
+        echo "Listing potential artifacts:"
+        find . -type f -name 'redsocks2' -o -name '*.so' -o -name '*.a' -o -name '*.bin'
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: redsocks2-build
+        path: |
+          redsocks2
+          *.so
+          *.a
+          *.bin
